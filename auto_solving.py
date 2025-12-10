@@ -145,20 +145,31 @@ class AutoLoopSolver:
         screen_w, screen_h = pyautogui.size()
         
         # 正規化座標(0-1000)から論理座標へ変換
-        # AIは画像の中心を0-1000で返すため、それを画面サイズに引き延ばす
+        # box_2dは[ymin, xmin, ymax, xmax]の順番
+        # 中心座標を計算: X座標とY座標を正しく対応させる
         center_x = ((xmin + xmax) / 2 / 1000) * screen_w
         center_y = ((ymin + ymax) / 2 / 1000) * screen_h
         
-        # マルチモニター等のオフセット補正（mssのmonitor['left']を使う）
-        # ※ pyautoguiはメインモニタ基準なので、通常はオフセット不要だが、
-        # サブモニタの場合はここに monitor['left'] を足す必要がある。
-        # 今回はメインモニタ前提でシンプルにする。
+        # デバッグ出力
+        print(f"Box: ymin={ymin}, xmin={xmin}, ymax={ymax}, xmax={xmax}")
+        print(f"Screen: {screen_w}x{screen_h}")
+        print(f"Click: ({center_x:.1f}, {center_y:.1f})")
+        
+        # マルチモニター等のオフセット補正
+        # モニターの左上オフセットを追加（サブモニタ対応）
+        offset_x = monitor.get('left', 0)
+        offset_y = monitor.get('top', 0)
+        
+        final_x = center_x + offset_x
+        final_y = center_y + offset_y
+        
+        print(f"Final click: ({final_x:.1f}, {final_y:.1f})")
 
         # 移動してクリック
-        pyautogui.moveTo(center_x, center_y, duration=0.4) # 少しゆっくり動かして精度確認
-        time.sleep(0.4)
+        pyautogui.moveTo(final_x, final_y, duration=0.4)
+        time.sleep(0.2)
         pyautogui.click()
-        time.sleep(1)
+        time.sleep(0.8)
 
     def update_ui_text(self, text):
         self.root.after(0, lambda: self.status_label.config(text=text))
